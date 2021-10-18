@@ -30,5 +30,5 @@ dependencies {
     implementation files('libs/Sunflower.jar')
 
     implementation "com.facebook.react:react-native:+"
-    implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
+//    implementation 'androidx.appcompat:appcompat:1.0.0'
 }
