@@ -27,7 +27,6 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation files('libs/Msc.jar')
-    implementation files('libs/Sunflower.jar')
 
     implementation "com.facebook.react:react-native:+"
 //    implementation 'androidx.appcompat:appcompat:1.0.0'
