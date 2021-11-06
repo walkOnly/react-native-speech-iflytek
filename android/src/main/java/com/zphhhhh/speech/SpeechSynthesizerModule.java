@@ -3,7 +3,6 @@ package com.zphhhhh.speech;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Environment;
-import android.widget.Toast;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
@@ -19,9 +18,6 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SpeechUtility;
 import com.iflytek.cloud.SynthesizerListener;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -40,7 +36,6 @@ public class SpeechSynthesizerModule extends ReactContextBaseJavaModule {
     private static long endTime;
     private String content;
     private String filename;
-
 
     public SpeechSynthesizerModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -62,21 +57,20 @@ public class SpeechSynthesizerModule extends ReactContextBaseJavaModule {
 
         mTts = SpeechSynthesizer.createSynthesizer(this.context, null);
         mTtsListener = new SynthesizerListener() {
-
             @Override
-            public void onSpeakBegin() {
-
-            }
-
-            @Override
-            public void onBufferProgress(int i, int i1, int i2, String s) {
+            public void onBufferProgress(int percent, int beginPos, int endPos, String s) {
                 // 合成进度
-                if(i == 100) {
+                if (percent == 100) {
                     WritableMap params = Arguments.createMap();
                     params.putString("content", content);
                     params.putString("filename", filename);
                     onJSEvent(getReactApplicationContext(), "onSynthesizerBufferCompletedEvent", params);
                 }
+            }
+
+            @Override
+            public void onSpeakBegin() {
+
             }
 
             @Override
@@ -90,7 +84,7 @@ public class SpeechSynthesizerModule extends ReactContextBaseJavaModule {
             }
 
             @Override
-            public void onSpeakProgress(int i, int i1, int i2) {
+            public void onSpeakProgress(int percent, int beginPos, int endPos) {
                 // 播放进度
             }
 
@@ -120,36 +114,9 @@ public class SpeechSynthesizerModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void synthesizeToFile(String content, String filename, Promise promise) {
-        if (mTts.isSpeaking()) {
-            mTts.stopSpeaking();
-        }
-
-        this.content = content;
-        this.filename = filename;
-
-        setTtsParam();
-        int result = mTts.synthesizeToUri(content, Environment.getExternalStorageDirectory() + filename, mTtsListener);
-        try{
-            promise.resolve(result);
-        } catch (IllegalViewOperationException e) {
-            promise.reject("Error: synthesizeToFile()", e);
-        }
-    }
-
-    @ReactMethod
     public void stop() {
         if (mTts.isSpeaking()) {
             mTts.stopSpeaking();
-        }
-    }
-
-    @ReactMethod
-    public void isSpeaking(Promise promise) {
-        try {
-            promise.resolve(mTts.isSpeaking());
-        } catch (IllegalViewOperationException e) {
-            promise.reject("Error : isSpeaking()", e);
         }
     }
 
@@ -164,6 +131,33 @@ public class SpeechSynthesizerModule extends ReactContextBaseJavaModule {
     public void resume() {
         if (mTts.isSpeaking()) {
             mTts.resumeSpeaking();
+        }
+    }
+
+    @ReactMethod
+    public void isSpeaking(Promise promise) {
+        try {
+            promise.resolve(mTts.isSpeaking());
+        } catch (IllegalViewOperationException e) {
+            promise.reject("Error : isSpeaking()", e);
+        }
+    }
+
+    @ReactMethod
+    public void synthesizeToFile(String content, String filename, Promise promise) {
+        if (mTts.isSpeaking()) {
+            mTts.stopSpeaking();
+        }
+
+        this.content = content;
+        this.filename = filename;
+
+        setTtsParam();
+        int result = mTts.synthesizeToUri(content, Environment.getExternalStorageDirectory() + filename, mTtsListener);
+        try {
+            promise.resolve(result);
+        } catch (IllegalViewOperationException e) {
+            promise.reject("Error: synthesizeToFile()", e);
         }
     }
 
@@ -210,15 +204,12 @@ public class SpeechSynthesizerModule extends ReactContextBaseJavaModule {
         onJSEvent(getReactApplicationContext(), "onSynthesizerSpeakCompletedEvent", params);
     }
 
-    private void showTip(final String str) {
-        Toast.makeText(this.context, str, Toast.LENGTH_SHORT).show();
-    }
-
     private void onJSEvent(ReactContext reactContext,
-                         String eventName,
-                         @Nullable WritableMap params) {
+                           String eventName,
+                           @Nullable WritableMap params) {
         reactContext
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit(eventName, params);
     }
+
 }
