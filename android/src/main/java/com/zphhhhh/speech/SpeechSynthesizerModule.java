@@ -3,6 +3,7 @@ package com.zphhhhh.speech;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
@@ -11,6 +12,7 @@ import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.uimanager.IllegalViewOperationException;
 import com.iflytek.cloud.SpeechConstant;
@@ -27,6 +29,9 @@ import javax.annotation.Nullable;
  */
 
 public class SpeechSynthesizerModule extends ReactContextBaseJavaModule {
+
+    private static final String TAG = "ReactNative-speech";
+
     private Context context;
 
     private SpeechSynthesizer mTts;
@@ -64,23 +69,23 @@ public class SpeechSynthesizerModule extends ReactContextBaseJavaModule {
                     WritableMap params = Arguments.createMap();
                     params.putString("content", content);
                     params.putString("filename", filename);
-                    onJSEvent(getReactApplicationContext(), "onSynthesizerBufferCompletedEvent", params);
+                    _emitEvent("onBufferCompleted", params);
                 }
             }
 
             @Override
             public void onSpeakBegin() {
-
+                _emitEvent("onSpeakBegin", null);
             }
 
             @Override
             public void onSpeakPaused() {
-
+                _emitEvent("onSpeakPaused", null);
             }
 
             @Override
             public void onSpeakResumed() {
-
+                _emitEvent("onSpeakResumed", null);
             }
 
             @Override
@@ -201,15 +206,20 @@ public class SpeechSynthesizerModule extends ReactContextBaseJavaModule {
         WritableMap params = Arguments.createMap();
         params.putInt("duration", duration);
 
-        onJSEvent(getReactApplicationContext(), "onSynthesizerSpeakCompletedEvent", params);
+        _emitEvent("onCompleted", null);
     }
 
-    private void onJSEvent(ReactContext reactContext,
-                           String eventName,
-                           @Nullable WritableMap params) {
-        reactContext
+    private void _emitEvent(String eventName, WritableMap params) {
+        Log.d(TAG, "_emitEvent(): " + eventName);
+
+        if (params == null) {
+            params = new WritableNativeMap();
+        }
+        params.putString("msg", eventName);
+
+        getReactApplicationContext()
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                .emit(eventName, params);
+                .emit("SpeechSynthesizerEvent", params);
     }
 
 }
